@@ -1,123 +1,92 @@
 import streamlit as st
-import logging
-import google.generativeai as genai
-import re
+import requests
 
-# Configure logging (local logging)
-logging.basicConfig(level=logging.INFO)
+# Load the API key from secrets
+api_key = st.secrets["tmdb_api_key"]
 
-# Sidebar for User Input
-st.sidebar.title("AI-Powered Movie Recommendation Engine")
-st.sidebar.subheader("Personalize Your Movie Recommendations")
+# CSS Styling
+def local_css(file_name):
+    with open(file_name) as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
-# Input field for Google API Key
-google_api_key = st.sidebar.text_input("Please enter your Google API key:")
+local_css("style.css")
 
-if google_api_key:
-    # Configure Google Generative AI
+# TMDB API Endpoints
+base_url = "https://api.themoviedb.org/3"
+discover_url = f"{base_url}/discover/movie"
+genre_url = f"{base_url}/genre/movie/list"
+
+# Get list of genres
+def get_genres():
     try:
-        genai.configure(api_key=google_api_key)
-        st.sidebar.success("Successfully configured Google Generative AI!")
-    except Exception as e:
-        st.sidebar.error("Failed to configure Google Generative AI.")
-        st.sidebar.write(str(e))
+        response = requests.get(genre_url, params={"api_key": api_key})
+        response.raise_for_status()  # Raise an error for bad status codes
+        genres = response.json().get('genres', [])
+        
+        if not genres:
+            st.error("No genres found. Please try again later.")
+            return {}
+        
+        return {genre['name']: genre['id'] for genre in genres}
+    
+    except requests.exceptions.HTTPError as http_err:
+        st.error(f"HTTP error occurred: {http_err}")
+    except Exception as err:
+        st.error(f"An error occurred: {err}")
+    
+    return {}
 
-    # Sidebar for movie preferences
-    genre = st.sidebar.selectbox(
-        "What genre of movies do you prefer?",
-        ("Action", "Comedy", "Drama", "Horror", "Romantic", "Sci-Fi", "Thriller"),
-        index=None,
-        placeholder="Select your preferred genre."
-    )
+# Fetch movies based on filters
+def fetch_movies(genre_id, min_rating, similar_to):
+    params = {
+        "api_key": api_key,
+        "with_genres": genre_id,
+        "vote_average.gte": min_rating,
+        "include_adult": False,
+    }
+    if similar_to:
+        params["with_keywords"] = similar_to
 
-    actor = st.sidebar.text_input(
-        "Favorite actor/actress:",
-        value="Leonardo DiCaprio"
-    )
+    response = requests.get(discover_url, params=params)
+    return response.json().get('results', [])
 
-    director = st.sidebar.text_input(
-        "Favorite director:",
-        value="Christopher Nolan"
-    )
+# Function to display films in rows and columns
+def display_films_in_rows(films, card_class="movie-card"):
+    cols = st.columns(4)  # Adjust the number of columns
+    for i, film in enumerate(films):
+        with cols[i % 4]:  # Place the film in one of the 4 columns
+            st.markdown(f"""
+            <div class="{card_class}">
+                <img src="https://image.tmdb.org/t/p/w500{film['poster_path']}" alt="{film['title']}">
+                <div class="movie-info">
+                    <h4>{film['title']}</h4>
+                    <p>Rating: {film['vote_average']}</p>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
 
-    movie = st.sidebar.text_input(
-        "Enter a movie you like:",
-        value="Inception"
-    )
+# Streamlit App Layout
+st.sidebar.title("Find Your Movie")
+genres_dict = get_genres()
 
-    # Button to generate recommendations
-    generate_recommendations = st.sidebar.button("Generate my movie recommendations", key="generate_recommendations")
+if not genres_dict:
+    st.error("Failed to load genres. Please try again later.")
+else:
+    genre = st.sidebar.selectbox("Genre", list(genres_dict.keys()))
+    min_rating = st.sidebar.slider("Minimum Rating", 0, 10, 5)
+    similar_to = st.sidebar.text_input("Similar to (Keyword)")
 
-    # Main content area
-    st.header("AI-Powered Movie Recommendation Engine", divider="gray")
+    if st.sidebar.button("Find Movies"):
+        genre_id = genres_dict.get(genre)
+        
+        if genre_id:
+            movies = fetch_movies(genre_id, min_rating, similar_to)
+            
+            if movies:
+                st.write(f"Showing movies for genre: **{genre}** with rating **{min_rating}** and similar to **{similar_to}**")
+                display_films_in_rows(movies)  # Display films in rows and columns
+            else:
+                st.warning("No movies found with the selected filters.")
+        else:
+            st.error("Selected genre is not available. Please try again.")
 
-    if generate_recommendations:
-        with st.spinner("Generating your movie recommendations using Gemini..."):
-            try:
-                # Custom prompt for movie recommendations with specific details
-                prompt = f"""
-                I am a movie recommendation engine. Based on the following preferences, 
-                recommend some movies that the user might enjoy.
-                - Preferred genre: {genre}
-                - Favorite actor/actress: {actor}
-                - Favorite director: {director}
-                - A movie they liked: {movie}
-
-                For each recommended movie, please include:
-                1. The movie title.
-                2. A brief description of the plot.
-                3. An image URL of the movie poster.
-                4. The platforms where the movie can be watched (e.g., Netflix, Amazon Prime).
-                """
-
-                max_output_tokens = 2048
-
-                config = {
-                    "temperature": 0.7,
-                    "max_output_tokens": max_output_tokens,
-                }
-
-                # Using genai to generate recommendations
-                response = genai.generate_text(prompt=prompt, temperature=config["temperature"], max_output_tokens=config["max_output_tokens"])
-
-                if response and response.result:  # Ensure the response is valid
-                    recommendations = response.result
-                    
-                    # Regex pattern to capture the relevant movie details
-                    pattern = re.compile(
-                        r'\#\#\s*(.*?)\s*\((\d{4})\)\s*\*\s*A brief description of the plot:\s*(.*?)\s*\*\s*An image URL of the movie poster:\s*(.*?)\s*\*\s*The platforms where the movie can be watched:\s*(.*?)\n'
-                    )
-                    movies = pattern.findall(recommendations)
-
-                    if movies:
-                        st.write("Your movie recommendations:")
-                        
-                        st.markdown('<div class="movies-container">', unsafe_allow_html=True)
-                        
-                        cols = st.columns(2)  # Create 2 columns for displaying recommendations in rows
-                        for i, movie in enumerate(movies):
-                            title, year, plot, image_url, platform_raw = movie
-                            platform = ', '.join([p.strip() for p in platform_raw.split('*') if p.strip()])
-
-                            with cols[i % 2]:  # Distribute recommendations across columns
-                                st.markdown(f"""
-                                <div class="movie-card">
-                                    <img src="{image_url.strip()}" alt="{title} ({year})" style="width:100%; height:auto; border-radius:10px;">
-                                    <div class="movie-info">
-                                        <h4>{title} ({year})</h4>
-                                        <p><strong>Platform:</strong> {platform}</p>
-                                        <p>{plot.strip()}</p>
-                                    </div>
-                                </div>
-                                """, unsafe_allow_html=True)
-                        
-                        st.markdown('</div>', unsafe_allow_html=True)  # Close the container div
-                        
-                    else:
-                        st.warning("No movie recommendations were generated.")
-
-                else:
-                    st.warning("No recommendations were generated. Please try again.")
-            except Exception as e:
-                st.error("Failed to generate AI recommendations.")
-                st.write(str(e))
