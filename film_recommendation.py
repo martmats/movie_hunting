@@ -129,6 +129,3 @@ if google_api_key:
             with prompt_tab:
                 st.text(prompt)
 
-                    st.write(str(e))
-            with prompt_tab:
-                st.text(prompt)
