@@ -7,7 +7,6 @@ import re
 logging.basicConfig(level=logging.INFO)
 
 # Sidebar for User Input
-st.sidebar.title("AI-Powered Movie Recommendation Engine")
 st.sidebar.subheader("Personalize Your Movie Recommendations")
 
 # Input field for Google API Key
@@ -85,7 +84,7 @@ if google_api_key:
                     recommendations = response.result
                     
                     # Print the raw AI response to debug the format
-                    st.write("Debug - Raw AI Response:", recommendations)
+                    st.write("We recommend you:", recommendations)
 
                     # Adjusted regex pattern to capture multiple movies correctly
                     pattern = re.compile(
