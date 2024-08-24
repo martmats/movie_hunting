@@ -1,9 +1,18 @@
 import streamlit as st
 import requests
+import google.generativeai as genai
 
-# Load the API keys from secrets
+# Load API keys from secrets
 tmdb_api_key = st.secrets["tmdb_api_key"]
-gemini_api_key = st.secrets["gem.api"]
+google_api_key = st.secrets["AIzaSyBVkD-QgIk41F8g4Ro3l_6DwWgyXSqu4YY"]
+
+# Configure Google Generative AI
+try:
+    genai.configure(api_key=google_api_key)
+    st.success("Successfully configured Google Generative AI!")
+except Exception as e:
+    st.error("Failed to configure Google Generative AI.")
+    st.write(str(e))
 
 # CSS Styling
 def local_css(file_name):
@@ -13,101 +22,56 @@ def local_css(file_name):
 local_css("style.css")
 
 # TMDB API Endpoints
-base_url = "https://api.themoviedb.org/3"
-discover_url = f"{base_url}/discover/movie"
-genre_url = f"{base_url}/genre/movie/list"
+tmdb_base_url = "https://api.themoviedb.org/3"
+search_url = f"{tmdb_base_url}/search/movie"
+details_url = f"{tmdb_base_url}/movie"
 
-# Gemini API Endpoint (Assuming it's similar to other APIs)
-gemini_base_url = "https://api.gemini.ai/recommendations"
-
-# Get list of genres from TMDB
-def get_genres():
-    try:
-        response = requests.get(genre_url, params={"api_key": tmdb_api_key})
-        response.raise_for_status()
-        genres = response.json().get('genres', [])
-        if not genres:
-            st.error("No genres found. Please try again later.")
-            return {}
-        return {genre['name']: genre['id'] for genre in genres}
-    except requests.exceptions.HTTPError as http_err:
-        st.error(f"HTTP error occurred: {http_err}")
-    except Exception as err:
-        st.error(f"An error occurred: {err}")
-    return {}
-
-# Fetch movies from TMDB based on filters
-def fetch_movies(genre_id, min_rating, similar_to):
-    params = {
-        "api_key": tmdb_api_key,
-        "with_genres": genre_id,
-        "vote_average.gte": min_rating,
-        "include_adult": False,
-    }
-    if similar_to:
-        params["with_keywords"] = similar_to
-    response = requests.get(discover_url, params=params)
+# Fetch movie details from TMDB
+def fetch_movie_details(movie_name):
+    response = requests.get(search_url, params={"api_key": tmdb_api_key, "query": movie_name})
+    response.raise_for_status()
     return response.json().get('results', [])
 
-# Get AI-enhanced movie recommendations from Gemini API
-def fetch_ai_recommendations(movies):
-    movie_ids = [movie['id'] for movie in movies]  # Assuming Gemini API accepts TMDB movie IDs
-    response = requests.post(
-        gemini_base_url,
-        headers={"Authorization": f"Bearer {gemini_api_key}"},
-        json={"movie_ids": movie_ids}
-    )
-    if response.status_code == 200:
-        return response.json().get('recommended_movies', [])
-    else:
-        st.error("Failed to fetch AI-enhanced recommendations.")
-        return []
+# Use Google Generative AI to enhance recommendations
+def generate_recommendations(movie_title):
+    try:
+        prompt = f"Recommend me movies similar to {movie_title} with augmented details from TMDB and IMDB."
+        response = genai.generate_text(prompt=prompt)
+        return response['text'] if 'text' in response else "No recommendations found."
+    except Exception as e:
+        st.error("Failed to generate AI recommendations.")
+        st.write(str(e))
+        return "No recommendations found."
 
-# Function to display films in rows and columns
-def display_films_in_rows(films, card_class="movie-card"):
-    cols = st.columns(4)
-    for i, film in enumerate(films):
-        with cols[i % 4]:
-            st.markdown(f"""
-            <div class="{card_class}">
-                <img src="https://image.tmdb.org/t/p/w500{film['poster_path']}" alt="{film['title']}">
-                <div class="movie-info">
-                    <h4>{film['title']}</h4>
-                    <p>Rating: {film['vote_average']}</p>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+# Function to display AI recommendations
+def display_recommendations(recommendations):
+    st.write("### AI-Enhanced Recommendations")
+    st.write(recommendations)
 
 # Streamlit App Layout
-st.sidebar.title("Find Your Movie")
-genres_dict = get_genres()
+st.sidebar.title("Movie Recommendation Engine")
 
-if not genres_dict:
-    st.error("Failed to load genres. Please try again later.")
-else:
-    genre = st.sidebar.selectbox("Genre", list(genres_dict.keys()))
-    min_rating = st.sidebar.slider("Minimum Rating", 0, 10, 5)
-    similar_to = st.sidebar.text_input("Similar to (Keyword)")
+# User input for movie they like
+user_movie = st.sidebar.text_input("Enter a movie you like")
 
-    if st.sidebar.button("Find Movies"):
-        genre_id = genres_dict.get(genre)
-        
-        if genre_id:
-            movies = fetch_movies(genre_id, min_rating, similar_to)
-            
-            if movies:
-                st.write(f"Showing movies for genre: **{genre}** with rating **{min_rating}** and similar to **{similar_to}**")
+if st.sidebar.button("Get Recommendations"):
+    if user_movie:
+        # Fetch movie details
+        movies = fetch_movie_details(user_movie)
 
-                # Fetch AI-enhanced recommendations from Gemini API
-                ai_movies = fetch_ai_recommendations(movies)
+        if movies:
+            # Get the first matching movie (you can enhance this to let users select from multiple)
+            movie_title = movies[0]['title']
 
-                if ai_movies:
-                    st.write("### AI-Enhanced Recommendations")
-                    display_films_in_rows(ai_movies)  # Display AI-enhanced movies
-                else:
-                    st.warning("No AI-enhanced recommendations found. Displaying original results.")
-                    display_films_in_rows(movies)  # Fallback to original movies if AI fails
-            else:
-                st.warning("No movies found with the selected filters.")
+            st.write(f"### You selected: {movie_title}")
+
+            # Generate AI-enhanced recommendations
+            recommendations = generate_recommendations(movie_title)
+
+            # Display recommendations
+            display_recommendations(recommendations)
         else:
-            st.error("Selected genre is not available. Please try again.")
+            st.warning("No movies found with the selected name.")
+    else:
+        st.warning("Please enter a movie name.")
+
