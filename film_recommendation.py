@@ -1,7 +1,6 @@
 import streamlit as st
 import logging
 import google.generativeai as genai
-import re
 
 # Configure logging (local logging)
 logging.basicConfig(level=logging.INFO)
@@ -71,7 +70,10 @@ if google_api_key:
                 if response and response.result:  # Ensure the response is valid
                     recommendations = response.result
 
-                    # Adjusted regex pattern to capture movie recommendations
+                    # Debugging: print the raw AI response
+                    st.write("Raw AI Response:", recommendations)
+
+                    # Adjust regex pattern after seeing the raw output
                     pattern = re.compile(
                         r'Title:\s*(.*?)\s*Genre:\s*(.*?)\s*Actor/Actress:\s*(.*?)\s*Director:\s*(.*?)\s*Plot Summary:\s*(.*?)\s*Image URL:\s*(.*?)\s*Available Platforms:\s*(.*)'
                     )
