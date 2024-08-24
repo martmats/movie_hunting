@@ -7,7 +7,7 @@ import google.generativeai as genai
 logging.basicConfig(level=logging.INFO)
 
 # Load API keys from secrets
-google_api_key = "AIzaSyBVkD-QgIk41F8g4Ro3l_6DwWgyXSqu4YY"
+google_api_key = st.secrets["GOOGLE_API_KEY"]
 
 # Configure Google Generative AI
 try:
@@ -51,7 +51,7 @@ movie = st.text_input(
     value="Inception"
 )
 
-# Custom prompt for movie recommendations
+# Custom prompt for movie recommendations with specific details
 prompt = f"""
 I am a movie recommendation engine. Based on the following preferences, 
 recommend some movies that the user might enjoy.
@@ -60,8 +60,11 @@ recommend some movies that the user might enjoy.
 - Favorite director: {director}
 - A movie they liked: {movie}
 
-Please include the movie title, a brief description, 
-and why it matches the user's preferences.
+For each recommended movie, please include:
+1. The movie title.
+2. A brief description of the plot.
+3. An image URL of the movie poster.
+4. The platforms where the movie can be watched (e.g., Netflix, Amazon Prime).
 """
 
 max_output_tokens = 2048
@@ -82,21 +85,31 @@ if generate_recommendations and prompt:
                 
                 # Extracting the text from the response
                 recommendations = response.result  # Assuming 'result' holds the generated text
-               
+                
                 # Display recommendations with CSS styling
                 st.write("Your movie recommendations:")
-                recommendations_list = recommendations.split('\n')  # Assuming each recommendation is separated by a new line
+                recommendations_list = recommendations.split('\n\n')  # Split recommendations by double new lines
                 
                 # Create the container div for the movies
                 st.markdown('<div class="movies-container">', unsafe_allow_html=True)
                 
                 cols = st.columns(4)  # Create 4 columns for displaying recommendations in rows
                 for i, recommendation in enumerate(recommendations_list):
+                    # Extracting details for each movie
+                    lines = recommendation.split('\n')
+                    title = lines[0].replace("**Movie title:**", "").strip()
+                    plot = lines[1].replace("**Brief description:**", "").strip()
+                    image_url = lines[2].replace("**Image URL:**", "").strip() if len(lines) > 2 else ""
+                    platform = lines[3].replace("**Platforms:**", "").strip() if len(lines) > 3 else ""
+
                     with cols[i % 4]:  # Distribute recommendations across 4 columns
                         st.markdown(f"""
                         <div class="movie-card">
+                            <img src="{image_url}" alt="{title}" style="width:100%; height:auto; border-radius:10px;">
                             <div class="movie-info">
-                                <h4>{recommendation}</h4>
+                                <h4>{title}</h4>
+                                <p><strong>Platform:</strong> {platform}</p>
+                                <p>{plot}</p>
                             </div>
                         </div>
                         """, unsafe_allow_html=True)
