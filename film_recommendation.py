@@ -6,10 +6,6 @@ import re
 # Configure logging (local logging)
 logging.basicConfig(level=logging.INFO)
 
-# Sidebar for User Input
-st.sidebar.title("AI-Powered Movie Recommendation Engine")
-st.sidebar.subheader("Personalize Your Movie Recommendations")
-
 # Input field for Google API Key
 google_api_key = st.sidebar.text_input("Please enter your Google API key:")
 
@@ -50,6 +46,7 @@ if google_api_key:
 
     # Main content area
     st.header("AI-Powered Movie Recommendation Engine", divider="gray")
+    st.subheader("Personalize Your Movie Recommendations")
 
     if generate_recommendations:
         with st.spinner("Generating your movie recommendations using Gemini..."):
@@ -84,10 +81,7 @@ if google_api_key:
                 if response and response.result:  # Ensure the response is valid
                     recommendations = response.result
                     
-                    # Print the raw AI response to debug the format
-                    st.write("Debug - Raw AI Response:", recommendations)
-
-                    # Adjusted regex pattern to capture multiple movies correctly
+                    # Regex pattern to capture multiple movies correctly
                     pattern = re.compile(
                         r'\#\#\s*(.*?)\s*\((\d{4})\)\s*\*\s*A brief description of the plot:\s*(.*?)\s*\*\s*The main cast:\s*(.*?)\s*\*\s*An image URL of the movie poster:\s*(.*?)\s*\*\s*The platforms where the movie can be watched:\s*(.*?)\n'
                     )
