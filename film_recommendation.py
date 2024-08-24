@@ -9,6 +9,17 @@ logging.basicConfig(level=logging.INFO)
 # Load API keys from secrets
 google_api_key = "AIzaSyBVkD-QgIk41F8g4Ro3l_6DwWgyXSqu4YY"
 
+import os
+import streamlit as st
+import logging
+import google.generativeai as genai
+
+# Configure logging (local logging)
+logging.basicConfig(level=logging.INFO)
+
+# Load API keys from secrets
+google_api_key = st.secrets["GOOGLE_API_KEY"]
+
 # Configure Google Generative AI
 try:
     genai.configure(api_key=google_api_key)
@@ -90,39 +101,44 @@ if generate_recommendations and prompt:
                     # Splitting the response into separate movie recommendations
                     movies = recommendations.split("\n\n")  # Assuming each movie block is separated by double new lines
 
-                    # Display recommendations with CSS styling
-                    st.write("Your movie recommendations:")
-                    
-                    st.markdown('<div class="movies-container">', unsafe_allow_html=True)
-                    
-                    cols = st.columns(2)  # Create 2 columns for displaying recommendations in rows
-                    for i, movie in enumerate(movies):
-                        lines = movie.split("\n")
-                        if len(lines) >= 4:
-                            title = lines[0].strip("1. ").strip()
-                            plot = lines[2].replace("A brief description of the plot:", "").strip()
-                            image_url = lines[4].replace("An image URL of the movie poster:", "").strip()
-                            platform = lines[6].replace("The platforms where the movie can be watched:", "").strip()
+                    if movies:
+                        # Display recommendations with CSS styling
+                        st.write("Your movie recommendations:")
+                        
+                        st.markdown('<div class="movies-container">', unsafe_allow_html=True)
+                        
+                        cols = st.columns(2)  # Create 2 columns for displaying recommendations in rows
+                        for i, movie in enumerate(movies):
+                            lines = movie.split("\n")
+                            if len(lines) >= 4:
+                                title = lines[0].strip("1. ").strip()
+                                plot = lines[2].replace("A brief description of the plot:", "").strip()
+                                image_url = lines[4].replace("An image URL of the movie poster:", "").strip()
+                                platform = lines[6].replace("The platforms where the movie can be watched:", "").strip()
 
-                            with cols[i % 2]:  # Distribute recommendations across columns
-                                st.markdown(f"""
-                                <div class="movie-card">
-                                    <img src="{image_url}" alt="{title}" style="width:100%; height:auto; border-radius:10px;">
-                                    <div class="movie-info">
-                                        <h4>{title}</h4>
-                                        <p><strong>Platform:</strong> {platform}</p>
-                                        <p>{plot}</p>
+                                with cols[i % 2]:  # Distribute recommendations across columns
+                                    st.markdown(f"""
+                                    <div class="movie-card">
+                                        <img src="{image_url}" alt="{title}" style="width:100%; height:auto; border-radius:10px;">
+                                        <div class="movie-info">
+                                            <h4>{title}</h4>
+                                            <p><strong>Platform:</strong> {platform}</p>
+                                            <p>{plot}</p>
+                                        </div>
                                     </div>
-                                </div>
-                                """, unsafe_allow_html=True)
-                    
-                    st.markdown('</div>', unsafe_allow_html=True)  # Close the container div
+                                    """, unsafe_allow_html=True)
+                        
+                        st.markdown('</div>', unsafe_allow_html=True)  # Close the container div
+                        
+                    else:
+                        st.warning("No movie recommendations were generated.")
                     
                     logging.info(recommendations)
                 else:
-                    st.error("No recommendations were generated. Please try again.")
+                    st.warning("No recommendations were generated. Please try again.")
             except Exception as e:
                 st.error("Failed to generate AI recommendations.")
                 st.write(str(e))
         with prompt_tab:
             st.text(prompt)
+
