@@ -84,6 +84,9 @@ if google_api_key:
                 if response and response.result:  # Ensure the response is valid
                     recommendations = response.result
                     
+                    # Print the raw AI response to debug the format
+                    st.write("Debug - Raw AI Response:", recommendations)
+
                     # Adjusted regex pattern to capture multiple movies correctly
                     pattern = re.compile(
                         r'\#\#\s*(.*?)\s*\((\d{4})\)\s*\*\s*A brief description of the plot:\s*(.*?)\s*\*\s*The main cast:\s*(.*?)\s*\*\s*An image URL of the movie poster:\s*(.*?)\s*\*\s*The platforms where the movie can be watched:\s*(.*?)\n'
