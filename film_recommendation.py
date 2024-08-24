@@ -76,7 +76,7 @@ if google_api_key:
 
                     # Adjusted regex pattern to capture movie recommendations
                     pattern = re.compile(
-                        r'Title:\s*(.*?)\nPlot:\s*(.*?)\nCast:\s*(.*?)\nPoster URL:\s*(.*?)\nPlatforms:\s*(.*?)\n'
+                        r'Title:\s*(.*?)\s*Genre:\s*(.*?)\s*Director:\s*(.*?)\s*Writer:\s*(.*?)\s*Cast:\s*(.*?)\s*Plot Summary:\s*(.*?)\s*Image URL:\s*(.*?)\s*Available Platforms:\s*(.*)'
                     )
                     movies = pattern.findall(recommendations)
 
@@ -88,14 +88,13 @@ if google_api_key:
                             <style>
                             .movies-container {
                                 display: flex;
-                                flex-wrap: wrap;
+                                flex-direction: column;
                                 gap: 20px;
                             }
                             .movie-card {
                                 background-color: #f9f9f9;
                                 border: 1px solid #ddd;
                                 border-radius: 10px;
-                                width: 48%;
                                 padding: 15px;
                                 box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
                                 transition: transform 0.3s ease;
@@ -107,6 +106,7 @@ if google_api_key:
                                 width: 100%;
                                 height: auto;
                                 border-radius: 10px;
+                                margin-bottom: 15px;
                             }
                             .movie-card h4 {
                                 margin-top: 10px;
@@ -116,6 +116,11 @@ if google_api_key:
                             .movie-card p {
                                 font-size: 0.9rem;
                                 color: #555;
+                                margin-bottom: 10px;
+                            }
+                            .movie-card .platforms {
+                                font-weight: bold;
+                                color: #2a9d8f;
                             }
                             </style>
                             """,
@@ -125,15 +130,18 @@ if google_api_key:
                         st.markdown('<div class="movies-container">', unsafe_allow_html=True)
 
                         for movie in movies:
-                            title, plot, cast, image_url, platforms = movie
+                            title, genre, director, writer, cast, plot, image_url, platforms = movie
 
                             st.markdown(f"""
                             <div class="movie-card">
                                 <img src="{image_url.strip()}" alt="{title}" style="border-radius:10px;">
                                 <h4>{title}</h4>
-                                <p><strong>Plot:</strong> {plot.strip()}</p>
+                                <p><strong>Genre:</strong> {genre.strip()}</p>
+                                <p><strong>Director:</strong> {director.strip()}</p>
+                                <p><strong>Writer:</strong> {writer.strip()}</p>
                                 <p><strong>Cast:</strong> {cast.strip()}</p>
-                                <p><strong>Platforms:</strong> {platforms.strip()}</p>
+                                <p><strong>Plot Summary:</strong> {plot.strip()}</p>
+                                <p class="platforms"><strong>Available Platforms:</strong> {platforms.strip()}</p>
                             </div>
                             """, unsafe_allow_html=True)
 
