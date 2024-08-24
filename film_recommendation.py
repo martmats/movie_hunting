@@ -71,18 +71,13 @@ if google_api_key:
                 if response and response.result:  # Ensure the response is valid
                     recommendations = response.result
 
-                    # Print the raw AI response to debug the format
-                    st.write("your movies:", recommendations)
-
                     # Adjusted regex pattern to capture movie recommendations
                     pattern = re.compile(
-                        r'Title:\s*(.*?)\s*Genre:\s*(.*?)\s*Director:\s*(.*?)\s*Writer:\s*(.*?)\s*Cast:\s*(.*?)\s*Plot Summary:\s*(.*?)\s*Image URL:\s*(.*?)\s*Available Platforms:\s*(.*)'
+                        r'Title:\s*(.*?)\s*Genre:\s*(.*?)\s*Actor/Actress:\s*(.*?)\s*Director:\s*(.*?)\s*Plot Summary:\s*(.*?)\s*Image URL:\s*(.*?)\s*Available Platforms:\s*(.*)'
                     )
                     movies = pattern.findall(recommendations)
 
                     if movies:
-                        st.write("Your movie recommendations:")
-
                         st.markdown(
                             """
                             <style>
@@ -130,16 +125,15 @@ if google_api_key:
                         st.markdown('<div class="movies-container">', unsafe_allow_html=True)
 
                         for movie in movies:
-                            title, genre, director, writer, cast, plot, image_url, platforms = movie
+                            title, genre, actor, director, plot, image_url, platforms = movie
 
                             st.markdown(f"""
                             <div class="movie-card">
                                 <img src="{image_url.strip()}" alt="{title}" style="border-radius:10px;">
                                 <h4>{title}</h4>
                                 <p><strong>Genre:</strong> {genre.strip()}</p>
+                                <p><strong>Actor/Actress:</strong> {actor.strip()}</p>
                                 <p><strong>Director:</strong> {director.strip()}</p>
-                                <p><strong>Writer:</strong> {writer.strip()}</p>
-                                <p><strong>Cast:</strong> {cast.strip()}</p>
                                 <p><strong>Plot Summary:</strong> {plot.strip()}</p>
                                 <p class="platforms"><strong>Available Platforms:</strong> {platforms.strip()}</p>
                             </div>
