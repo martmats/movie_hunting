@@ -70,10 +70,27 @@ else:
             if movies:
                 st.write(f"Showing movies for genre: **{genre}** with rating **{min_rating}** and similar to **{similar_to}**")
 
+                # Create the container div for the movies
+                st.markdown('<div class="movies-container">', unsafe_allow_html=True)
+
                 for movie in movies:
-                    st.write(f"**{movie['title']}** - Rating: {movie['vote_average']}")
-                    st.image(f"https://image.tmdb.org/t/p/w500{movie['poster_path']}")
+                    # For each movie, create a movie-card div
+                    movie_card = f"""
+                    <div class="movie-card">
+                        <img src="https://image.tmdb.org/t/p/w500{movie['poster_path']}" alt="{movie['title']} poster">
+                        <div class="movie-info">
+                            <h4>{movie['title']}</h4>
+                            <p>Rating: {movie['vote_average']}</p>
+                        </div>
+                    </div>
+                    """
+                    st.markdown(movie_card, unsafe_allow_html=True)
+                
+                # Close the container div
+                st.markdown('</div>', unsafe_allow_html=True)
+
             else:
                 st.warning("No movies found with the selected filters.")
         else:
             st.error("Selected genre is not available. Please try again.")
+
