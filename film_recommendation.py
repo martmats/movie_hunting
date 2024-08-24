@@ -1,8 +1,9 @@
 import streamlit as st
 import requests
 
-# Load the API key from secrets
-api_key = st.secrets["tmdb_api_key"]
+# Load the API keys from secrets
+tmdb_api_key = st.secrets["tmdb_api_key"]
+gemini_api_key = st.secrets["gem.api"]
 
 # CSS Styling
 def local_css(file_name):
@@ -16,45 +17,57 @@ base_url = "https://api.themoviedb.org/3"
 discover_url = f"{base_url}/discover/movie"
 genre_url = f"{base_url}/genre/movie/list"
 
-# Get list of genres
+# Gemini API Endpoint (Assuming it's similar to other APIs)
+gemini_base_url = "https://api.gemini.ai/recommendations"
+
+# Get list of genres from TMDB
 def get_genres():
     try:
-        response = requests.get(genre_url, params={"api_key": api_key})
-        response.raise_for_status()  # Raise an error for bad status codes
+        response = requests.get(genre_url, params={"api_key": tmdb_api_key})
+        response.raise_for_status()
         genres = response.json().get('genres', [])
-        
         if not genres:
             st.error("No genres found. Please try again later.")
             return {}
-        
         return {genre['name']: genre['id'] for genre in genres}
-    
     except requests.exceptions.HTTPError as http_err:
         st.error(f"HTTP error occurred: {http_err}")
     except Exception as err:
         st.error(f"An error occurred: {err}")
-    
     return {}
 
-# Fetch movies based on filters
+# Fetch movies from TMDB based on filters
 def fetch_movies(genre_id, min_rating, similar_to):
     params = {
-        "api_key": api_key,
+        "api_key": tmdb_api_key,
         "with_genres": genre_id,
         "vote_average.gte": min_rating,
         "include_adult": False,
     }
     if similar_to:
         params["with_keywords"] = similar_to
-
     response = requests.get(discover_url, params=params)
     return response.json().get('results', [])
 
+# Get AI-enhanced movie recommendations from Gemini API
+def fetch_ai_recommendations(movies):
+    movie_ids = [movie['id'] for movie in movies]  # Assuming Gemini API accepts TMDB movie IDs
+    response = requests.post(
+        gemini_base_url,
+        headers={"Authorization": f"Bearer {gemini_api_key}"},
+        json={"movie_ids": movie_ids}
+    )
+    if response.status_code == 200:
+        return response.json().get('recommended_movies', [])
+    else:
+        st.error("Failed to fetch AI-enhanced recommendations.")
+        return []
+
 # Function to display films in rows and columns
 def display_films_in_rows(films, card_class="movie-card"):
-    cols = st.columns(4)  # Adjust the number of columns
+    cols = st.columns(4)
     for i, film in enumerate(films):
-        with cols[i % 4]:  # Place the film in one of the 4 columns
+        with cols[i % 4]:
             st.markdown(f"""
             <div class="{card_class}">
                 <img src="https://image.tmdb.org/t/p/w500{film['poster_path']}" alt="{film['title']}">
@@ -84,7 +97,16 @@ else:
             
             if movies:
                 st.write(f"Showing movies for genre: **{genre}** with rating **{min_rating}** and similar to **{similar_to}**")
-                display_films_in_rows(movies)  # Display films in rows and columns
+
+                # Fetch AI-enhanced recommendations from Gemini API
+                ai_movies = fetch_ai_recommendations(movies)
+
+                if ai_movies:
+                    st.write("### AI-Enhanced Recommendations")
+                    display_films_in_rows(ai_movies)  # Display AI-enhanced movies
+                else:
+                    st.warning("No AI-enhanced recommendations found. Displaying original results.")
+                    display_films_in_rows(movies)  # Fallback to original movies if AI fails
             else:
                 st.warning("No movies found with the selected filters.")
         else:
