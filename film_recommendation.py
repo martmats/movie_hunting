@@ -1,6 +1,7 @@
 import streamlit as st
 import logging
 import google.generativeai as genai
+import re
 
 # Configure logging (local logging)
 logging.basicConfig(level=logging.INFO)
@@ -85,37 +86,32 @@ if google_api_key:
                     
                     if response and response.result:  # Ensure the response is valid
                         recommendations = response.result
-                        st.write("Raw AI Response:", recommendations)  # For debugging
+                        # st.write("Raw AI Response:", recommendations)  # For debugging
 
-                        # Splitting the response into separate movie recommendations
-                        movies = recommendations.split("\n\n")  # Assuming each movie block is separated by double new lines
+                        # Extract movie data using regex
+                        pattern = re.compile(r'\*\*(.*?)\*\*.*?\((.*?)\)\n\* (.*?)\n\* \[Image\]\((.*?)\)\n\* \[Available on (.*?)\]')
+                        movies = pattern.findall(recommendations)
 
                         if movies:
-                            # Display recommendations with CSS styling
                             st.write("Your movie recommendations:")
                             
                             st.markdown('<div class="movies-container">', unsafe_allow_html=True)
                             
                             cols = st.columns(2)  # Create 2 columns for displaying recommendations in rows
                             for i, movie in enumerate(movies):
-                                lines = movie.split("\n")
-                                if len(lines) >= 4:
-                                    title = lines[0].strip("1. ").strip()
-                                    plot = lines[2].replace("A brief description of the plot:", "").strip()
-                                    image_url = lines[4].replace("An image URL of the movie poster:", "").strip()
-                                    platform = lines[6].replace("The platforms where the movie can be watched:", "").strip()
+                                title, year, plot, image_url, platform = movie
 
-                                    with cols[i % 2]:  # Distribute recommendations across columns
-                                        st.markdown(f"""
-                                        <div class="movie-card">
-                                            <img src="{image_url}" alt="{title}" style="width:100%; height:auto; border-radius:10px;">
-                                            <div class="movie-info">
-                                                <h4>{title}</h4>
-                                                <p><strong>Platform:</strong> {platform}</p>
-                                                <p>{plot}</p>
-                                            </div>
+                                with cols[i % 2]:  # Distribute recommendations across columns
+                                    st.markdown(f"""
+                                    <div class="movie-card">
+                                        <img src="{image_url}" alt="{title} ({year})" style="width:100%; height:auto; border-radius:10px;">
+                                        <div class="movie-info">
+                                            <h4>{title} ({year})</h4>
+                                            <p><strong>Platform:</strong> {platform}</p>
+                                            <p>{plot}</p>
                                         </div>
-                                        """, unsafe_allow_html=True)
+                                    </div>
+                                    """, unsafe_allow_html=True)
                             
                             st.markdown('</div>', unsafe_allow_html=True)  # Close the container div
                             
