@@ -18,9 +18,23 @@ genre_url = f"{base_url}/genre/movie/list"
 
 # Get list of genres
 def get_genres():
-    response = requests.get(genre_url, params={"api_key": api_key})
-    genres = response.json().get('genres', [])
-    return {genre['name']: genre['id'] for genre in genres}
+    try:
+        response = requests.get(genre_url, params={"api_key": api_key})
+        response.raise_for_status()  # Raise an error for bad status codes
+        genres = response.json().get('genres', [])
+        
+        if not genres:
+            st.error("No genres found. Please try again later.")
+            return {}
+        
+        return {genre['name']: genre['id'] for genre in genres}
+    
+    except requests.exceptions.HTTPError as http_err:
+        st.error(f"HTTP error occurred: {http_err}")
+    except Exception as err:
+        st.error(f"An error occurred: {err}")
+    
+    return {}
 
 # Fetch movies based on filters
 def fetch_movies(genre_id, min_rating, similar_to):
@@ -40,7 +54,6 @@ def fetch_movies(genre_id, min_rating, similar_to):
 st.sidebar.title("Find Your Movie")
 genres_dict = get_genres()
 
-# Check if genres are available
 if not genres_dict:
     st.error("Failed to load genres. Please try again later.")
 else:
@@ -51,7 +64,6 @@ else:
     if st.sidebar.button("Find Movies"):
         genre_id = genres_dict.get(genre)
         
-        # Verify that genre_id was correctly retrieved
         if genre_id:
             movies = fetch_movies(genre_id, min_rating, similar_to)
             
