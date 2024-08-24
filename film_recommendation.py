@@ -6,6 +6,10 @@ import re
 # Configure logging (local logging)
 logging.basicConfig(level=logging.INFO)
 
+# Sidebar for User Input
+st.sidebar.title("AI-Powered Movie Recommendation Engine")
+st.sidebar.subheader("Personalize Your Movie Recommendations")
+
 # Input field for Google API Key
 google_api_key = st.sidebar.text_input("Please enter your Google API key:")
 
@@ -46,7 +50,6 @@ if google_api_key:
 
     # Main content area
     st.header("AI-Powered Movie Recommendation Engine", divider="gray")
-    st.subheader("Personalize Your Movie Recommendations")
 
     if generate_recommendations:
         with st.spinner("Generating your movie recommendations using Gemini..."):
