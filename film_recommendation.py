@@ -83,8 +83,11 @@ if generate_recommendations and prompt:
                 # Using genai to generate recommendations
                 response = genai.generate_text(prompt=prompt, temperature=config["temperature"], max_output_tokens=config["max_output_tokens"])
                 
+                # Debugging: Print the raw response
+                st.write("Raw AI Response:", response.result)
+
                 # Extracting the text from the response
-                recommendations = response.result  # Assuming 'result' holds the generated text
+                recommendations = response.result
                 
                 # Display recommendations with CSS styling
                 st.write("Your movie recommendations:")
@@ -95,12 +98,12 @@ if generate_recommendations and prompt:
                 
                 cols = st.columns(4)  # Create 4 columns for displaying recommendations in rows
                 for i, recommendation in enumerate(recommendations_list):
-                    # Extracting details for each movie
+                    # Extracting details for each movie with safeguards
                     lines = recommendation.split('\n')
-                    title = lines[0].replace("**Movie title:**", "").strip()
-                    plot = lines[1].replace("**Brief description:**", "").strip()
-                    image_url = lines[2].replace("**Image URL:**", "").strip() if len(lines) > 2 else ""
-                    platform = lines[3].replace("**Platforms:**", "").strip() if len(lines) > 3 else ""
+                    title = lines[0].replace("**Movie title:**", "").strip() if len(lines) > 0 else "Unknown Title"
+                    plot = lines[1].replace("**Brief description:**", "").strip() if len(lines) > 1 else "No description available."
+                    image_url = lines[2].replace("**Image URL:**", "").strip() if len(lines) > 2 else "https://via.placeholder.com/150"  # Placeholder image
+                    platform = lines[3].replace("**Platforms:**", "").strip() if len(lines) > 3 else "No platforms listed."
 
                     with cols[i % 4]:  # Distribute recommendations across 4 columns
                         st.markdown(f"""
