@@ -9,17 +9,6 @@ logging.basicConfig(level=logging.INFO)
 # Load API keys from secrets
 google_api_key = "AIzaSyBVkD-QgIk41F8g4Ro3l_6DwWgyXSqu4YY"
 
-import os
-import streamlit as st
-import logging
-import google.generativeai as genai
-
-# Configure logging (local logging)
-logging.basicConfig(level=logging.INFO)
-
-# Load API keys from secrets
-google_api_key = st.secrets["GOOGLE_API_KEY"]
-
 # Configure Google Generative AI
 try:
     genai.configure(api_key=google_api_key)
