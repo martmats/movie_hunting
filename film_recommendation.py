@@ -83,21 +83,21 @@ if google_api_key:
 
                 if response and response.result:  # Ensure the response is valid
                     recommendations = response.result
+                    
+                    # Print the raw AI response to debug the format
+                    st.write("Debug - Raw AI Response:", recommendations)
 
-                    # Print raw AI response for clarity
-                    st.write("Raw AI Response:", recommendations)
-
-                    # Simple pattern to match movies (less strict to capture more data)
+                    # Adjusted regex pattern to capture multiple movies correctly
                     pattern = re.compile(
-                        r'\#\#\s*(.*?)\s*\((\d{4})\)\s*.*?\*\s*(.*?)\n\*\s*(.*?)\n\*\s*(.*?)\n\*\s*(.*?)\n'
+                        r'\#\#\s*(.*?)\s*\((\d{4})\)\s*\*\s*A brief description of the plot:\s*(.*?)\s*\*\s*The main cast:\s*(.*?)\s*\*\s*An image URL of the movie poster:\s*(.*?)\s*\*\s*The platforms where the movie can be watched:\s*(.*?)\n'
                     )
                     movies = pattern.findall(recommendations)
 
                     if movies:
                         st.write("Your movie recommendations:")
-
+                        
                         st.markdown('<div class="movies-container">', unsafe_allow_html=True)
-
+                        
                         cols = st.columns(2)  # Create 2 columns for displaying recommendations in rows
                         for i, movie in enumerate(movies):
                             title, year, plot, cast, image_url, platform_raw = movie
@@ -115,12 +115,13 @@ if google_api_key:
                                     </div>
                                 </div>
                                 """, unsafe_allow_html=True)
-
+                        
                         st.markdown('</div>', unsafe_allow_html=True)  # Close the container div
-
+                        
                     else:
                         st.warning("No movie recommendations were generated.")
-
+                    
+                    logging.info(recommendations)
                 else:
                     st.warning("No recommendations were generated. Please try again.")
             except Exception as e:
