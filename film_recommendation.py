@@ -1,6 +1,7 @@
 import streamlit as st
 import logging
 import google.generativeai as genai
+import re  # Ensure the re module is imported
 
 # Configure logging (local logging)
 logging.basicConfig(level=logging.INFO)
@@ -70,12 +71,12 @@ if google_api_key:
                 if response and response.result:  # Ensure the response is valid
                     recommendations = response.result
 
-                    # Debugging: print the raw AI response
-                    st.write("Raw AI Response:", recommendations)
+                    # Print the parsed AI response
+                    st.write("Your Movies:", recommendations)
 
                     # Adjust regex pattern after seeing the raw output
                     pattern = re.compile(
-                        r'Title:\s*(.*?)\s*Genre:\s*(.*?)\s*Actor/Actress:\s*(.*?)\s*Director:\s*(.*?)\s*Plot Summary:\s*(.*?)\s*Image URL:\s*(.*?)\s*Available Platforms:\s*(.*)'
+                        r'Title:\s*(.*?)\s*Genre:\s*(.*?)\s*Actors:\s*(.*?)\s*Director:\s*(.*?)\s*Plot summary:\s*(.*?)\s*Image URL:\s*(.*?)\s*Available platforms:\s*(.*)'
                     )
                     movies = pattern.findall(recommendations)
 
@@ -134,7 +135,7 @@ if google_api_key:
                                 <img src="{image_url.strip()}" alt="{title}" style="border-radius:10px;">
                                 <h4>{title}</h4>
                                 <p><strong>Genre:</strong> {genre.strip()}</p>
-                                <p><strong>Actor/Actress:</strong> {actor.strip()}</p>
+                                <p><strong>Actors:</strong> {actor.strip()}</p>
                                 <p><strong>Director:</strong> {director.strip()}</p>
                                 <p><strong>Plot Summary:</strong> {plot.strip()}</p>
                                 <p class="platforms"><strong>Available Platforms:</strong> {platforms.strip()}</p>
