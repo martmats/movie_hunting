@@ -7,7 +7,7 @@ import google.generativeai as genai
 logging.basicConfig(level=logging.INFO)
 
 # Load API keys from secrets
-google_api_key = "AIzaSyBVkD-QgIk41F8g4Ro3l_6DwWgyXSqu4YY"
+google_api_key = st.secrets["GOOGLE_API_KEY"]
 
 # Configure Google Generative AI
 try:
@@ -79,7 +79,12 @@ if generate_recommendations and prompt:
             try:
                 # Using genai to generate recommendations
                 response = genai.generate_text(prompt=prompt, temperature=config["temperature"], max_output_tokens=config["max_output_tokens"])
-                recommendations = response["text"] if "text" in response else "No recommendations found."
+                
+                # Extracting the text from the response
+                if response and response.generations:
+                    recommendations = response.generations[0].text
+                else:
+                    recommendations = "No recommendations found."
                 
                 # Display recommendations with CSS styling
                 st.write("Your movie recommendations:")
@@ -107,4 +112,3 @@ if generate_recommendations and prompt:
                 st.write(str(e))
         with prompt_tab:
             st.text(prompt)
-
