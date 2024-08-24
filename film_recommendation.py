@@ -50,6 +50,21 @@ def fetch_movies(genre_id, min_rating, similar_to):
     response = requests.get(discover_url, params=params)
     return response.json().get('results', [])
 
+# Function to display films in rows and columns
+def display_films_in_rows(films, card_class="movie-card"):
+    cols = st.columns(4)  # Adjust the number of columns
+    for i, film in enumerate(films):
+        with cols[i % 4]:  # Place the film in one of the 4 columns
+            st.markdown(f"""
+            <div class="{card_class}">
+                <img src="https://image.tmdb.org/t/p/w500{film['poster_path']}" alt="{film['title']}">
+                <div class="movie-info">
+                    <h4>{film['title']}</h4>
+                    <p>Rating: {film['vote_average']}</p>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
 # Streamlit App Layout
 st.sidebar.title("Find Your Movie")
 genres_dict = get_genres()
@@ -69,32 +84,8 @@ else:
             
             if movies:
                 st.write(f"Showing movies for genre: **{genre}** with rating **{min_rating}** and similar to **{similar_to}**")
-
-                # Create the container div for the movies
-                st.markdown('<div class="movies-container">', unsafe_allow_html=True)
-
-                # Iterate through movies and render them in the grid
-                for index, movie in enumerate(movies):
-                    movie_card = f"""
-                    <div class="movie-card">
-                        <img src="https://image.tmdb.org/t/p/w500{movie['poster_path']}" alt="{movie['title']} poster">
-                        <div class="movie-info">
-                            <h4>{movie['title']}</h4>
-                            <p>Rating: {movie['vote_average']}</p>
-                        </div>
-                    </div>
-                    """
-                    # Insert a new row after every 4 movies
-                    if index % 4 == 0 and index != 0:
-                        st.markdown('</div><div class="movies-container">', unsafe_allow_html=True)
-                    
-                    st.markdown(movie_card, unsafe_allow_html=True)
-
-                # Close the container div
-                st.markdown('</div>', unsafe_allow_html=True)
-
+                display_films_in_rows(movies)  # Display films in rows and columns
             else:
                 st.warning("No movies found with the selected filters.")
         else:
             st.error("Selected genre is not available. Please try again.")
-
