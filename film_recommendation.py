@@ -1,7 +1,5 @@
 import streamlit as st
 import requests
-import pandas as pd
-from dotenv import load_dotenv
 
 # Load the API key from secrets
 api_key = st.secrets["tmdb_api_key"]
@@ -40,16 +38,30 @@ def fetch_movies(genre_id, min_rating, similar_to):
 
 # Streamlit App Layout
 st.sidebar.title("Find Your Movie")
-genre = st.sidebar.selectbox("Genre", list(get_genres().keys()))
-min_rating = st.sidebar.slider("Minimum Rating", 0, 10, 5)
-similar_to = st.sidebar.text_input("Similar to (Keyword)")
+genres_dict = get_genres()
 
-if st.sidebar.button("Find Movies"):
-    genre_id = get_genres()[genre]
-    movies = fetch_movies(genre_id, min_rating, similar_to)
-    
-    st.write(f"Showing movies for genre: **{genre}** with rating **{min_rating}** and similar to **{similar_to}**")
+# Check if genres are available
+if not genres_dict:
+    st.error("Failed to load genres. Please try again later.")
+else:
+    genre = st.sidebar.selectbox("Genre", list(genres_dict.keys()))
+    min_rating = st.sidebar.slider("Minimum Rating", 0, 10, 5)
+    similar_to = st.sidebar.text_input("Similar to (Keyword)")
 
-    for movie in movies:
-        st.write(f"**{movie['title']}** - Rating: {movie['vote_average']}")
-        st.image(f"https://image.tmdb.org/t/p/w500{movie['poster_path']}")
+    if st.sidebar.button("Find Movies"):
+        genre_id = genres_dict.get(genre)
+        
+        # Verify that genre_id was correctly retrieved
+        if genre_id:
+            movies = fetch_movies(genre_id, min_rating, similar_to)
+            
+            if movies:
+                st.write(f"Showing movies for genre: **{genre}** with rating **{min_rating}** and similar to **{similar_to}**")
+
+                for movie in movies:
+                    st.write(f"**{movie['title']}** - Rating: {movie['vote_average']}")
+                    st.image(f"https://image.tmdb.org/t/p/w500{movie['poster_path']}")
+            else:
+                st.warning("No movies found with the selected filters.")
+        else:
+            st.error("Selected genre is not available. Please try again.")
