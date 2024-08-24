@@ -86,9 +86,11 @@ if google_api_key:
                     
                     if response and response.result:  # Ensure the response is valid
                         recommendations = response.result
-                        # st.write("Raw AI Response:", recommendations)  # For debugging
+                        
+                        # Debugging: Print the AI response to see the structure
+                        st.write("Debug - Raw AI Response:", recommendations)
 
-                        # Extract movie data using regex
+                        # Attempt to parse the movies using a regex pattern
                         pattern = re.compile(r'\*\*(.*?)\*\*.*?\((.*?)\)\n\* (.*?)\n\* \[Image\]\((.*?)\)\n\* \[Available on (.*?)\]')
                         movies = pattern.findall(recommendations)
 
@@ -123,6 +125,10 @@ if google_api_key:
                         st.warning("No recommendations were generated. Please try again.")
                 except Exception as e:
                     st.error("Failed to generate AI recommendations.")
+                    st.write(str(e))
+            with prompt_tab:
+                st.text(prompt)
+
                     st.write(str(e))
             with prompt_tab:
                 st.text(prompt)
