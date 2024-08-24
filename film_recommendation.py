@@ -81,11 +81,8 @@ if generate_recommendations and prompt:
                 response = genai.generate_text(prompt=prompt, temperature=config["temperature"], max_output_tokens=config["max_output_tokens"])
                 
                 # Extracting the text from the response
-                if response and response.generations:
-                    recommendations = response.generations[0].text
-                else:
-                    recommendations = "No recommendations found."
-                
+                recommendations = response.result  # Assuming 'result' holds the generated text
+               
                 # Display recommendations with CSS styling
                 st.write("Your movie recommendations:")
                 recommendations_list = recommendations.split('\n')  # Assuming each recommendation is separated by a new line
