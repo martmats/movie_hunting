@@ -4,7 +4,7 @@ import google.generativeai as genai
 
 # Load API keys from secrets
 tmdb_api_key = st.secrets["tmdb_api_key"]
-google_api_key = st.secrets["AIzaSyBVkD-QgIk41F8g4Ro3l_6DwWgyXSqu4YY"]
+google_api_key = "AIzaSyBVkD-QgIk41F8g4Ro3l_6DwWgyXSqu4YY"
 
 # Configure Google Generative AI
 try:
