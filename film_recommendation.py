@@ -72,7 +72,7 @@ if google_api_key:
                     recommendations = response.result
 
                     # Print the raw AI response to debug the format
-                    st.write("Here are the raw details received from the AI:", recommendations)
+                    st.write(recommendations)
 
                     # Adjusted regex pattern to capture movie recommendations
                     pattern = re.compile(
