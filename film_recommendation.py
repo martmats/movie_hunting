@@ -51,7 +51,7 @@ if google_api_key:
     # Main content area
     st.header("AI-Powered Movie Recommendation Engine", divider="gray")
 
-    if generate_recommendations and prompt:
+    if generate_recommendations:
         with st.spinner("Generating your movie recommendations using Gemini..."):
             try:
                 # Custom prompt for movie recommendations with specific details
@@ -66,7 +66,7 @@ if google_api_key:
                 For each recommended movie, please include:
                 1. The movie title.
                 2. A brief description of the plot.
-                3. Cast
+                3. The main cast.
                 4. An image URL of the movie poster.
                 5. The platforms where the movie can be watched (e.g., Netflix, Amazon Prime).
                 """
@@ -86,7 +86,7 @@ if google_api_key:
                     
                     # Adjusted regex pattern to capture multiple movies correctly
                     pattern = re.compile(
-                        r'\#\#\s*(.*?)\s*\((\d{4})\)\s*\*\s*A brief description of the plot:\s*(.*?)\s*\*\s*An image URL of the movie poster:\s*(.*?)\s*\*\s*Cast:\s*(.*?)\s*\*\s*The platforms where the movie can be watched:\s*(.*?)\n'
+                        r'\#\#\s*(.*?)\s*\((\d{4})\)\s*\*\s*A brief description of the plot:\s*(.*?)\s*\*\s*The main cast:\s*(.*?)\s*\*\s*An image URL of the movie poster:\s*(.*?)\s*\*\s*The platforms where the movie can be watched:\s*(.*?)\n'
                     )
                     movies = pattern.findall(recommendations)
 
@@ -107,6 +107,7 @@ if google_api_key:
                                     <div class="movie-info">
                                         <h4>{title} ({year})</h4>
                                         <p><strong>Platform:</strong> {platform}</p>
+                                        <p><strong>Cast:</strong> {cast.strip()}</p>
                                         <p>{plot.strip()}</p>
                                     </div>
                                 </div>
