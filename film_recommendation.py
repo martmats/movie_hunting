@@ -65,8 +65,8 @@ if google_api_key:
 
                 For each recommended movie, please include:
                 1. The movie title.
-                2. A brief description of the plot.                
-                3. An image URL of the movie poster from IMDB.
+                2. A brief description of the plot.
+                3. An image URL of the movie poster.
                 4. The platforms where the movie can be watched (e.g., Netflix, Amazon Prime).
                 """
 
@@ -83,10 +83,7 @@ if google_api_key:
                 if response and response.result:  # Ensure the response is valid
                     recommendations = response.result
                     
-                    # Print the raw AI response to debug the format
-                    st.write("Your Movies:", recommendations)
-
-                    # Adjusted regex pattern to capture multiple movies correctly
+                    # Regex pattern to capture the relevant movie details
                     pattern = re.compile(
                         r'\#\#\s*(.*?)\s*\((\d{4})\)\s*\*\s*A brief description of the plot:\s*(.*?)\s*\*\s*An image URL of the movie poster:\s*(.*?)\s*\*\s*The platforms where the movie can be watched:\s*(.*?)\n'
                     )
@@ -108,7 +105,7 @@ if google_api_key:
                                     <img src="{image_url.strip()}" alt="{title} ({year})" style="width:100%; height:auto; border-radius:10px;">
                                     <div class="movie-info">
                                         <h4>{title} ({year})</h4>
-                                        <p><strong>Platform:</strong> {platform}</p>                                        
+                                        <p><strong>Platform:</strong> {platform}</p>
                                         <p>{plot.strip()}</p>
                                     </div>
                                 </div>
@@ -118,8 +115,7 @@ if google_api_key:
                         
                     else:
                         st.warning("No movie recommendations were generated.")
-                    
-                    logging.info(recommendations)
+
                 else:
                     st.warning("No recommendations were generated. Please try again.")
             except Exception as e:
