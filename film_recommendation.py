@@ -71,9 +71,6 @@ if google_api_key:
                 if response and response.result:  # Ensure the response is valid
                     recommendations = response.result
 
-                    # Print the raw AI response to debug the format
-                    st.write("Here are the raw details received from the AI:", recommendations)
-
                     # Adjusted regex pattern to capture movie recommendations
                     pattern = re.compile(
                         r'Title:\s*(.*?)\s*Genre:\s*(.*?)\s*Director:\s*(.*?)\s*Writer:\s*(.*?)\s*Cast:\s*(.*?)\s*Plot Summary:\s*(.*?)\s*Image URL:\s*(.*?)\s*Available Platforms:\s*(.*)'
@@ -81,8 +78,6 @@ if google_api_key:
                     movies = pattern.findall(recommendations)
 
                     if movies:
-                        st.write("Your movie recommendations:")
-
                         st.markdown(
                             """
                             <style>
@@ -156,3 +151,4 @@ if google_api_key:
             except Exception as e:
                 st.error("Failed to generate AI recommendations.")
                 st.write(str(e))
+
