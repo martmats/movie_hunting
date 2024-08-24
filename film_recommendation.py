@@ -1,10 +1,16 @@
+import os
 import streamlit as st
-import requests
+import logging
+from google.cloud import logging as cloud_logging
 import google.generativeai as genai
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+log_client = cloud_logging.Client()
+log_client.setup_logging()
+
 # Load API keys from secrets
-tmdb_api_key = st.secrets["tmdb_api_key"]
-google_api_key = "AIzaSyBVkD-QgIk41F8g4Ro3l_6DwWgyXSqu4YY"
+google_api_key = st.secrets["GOOGLE_API_KEY"]
 
 # Configure Google Generative AI
 try:
@@ -14,64 +20,94 @@ except Exception as e:
     st.error("Failed to configure Google Generative AI.")
     st.write(str(e))
 
-# CSS Styling
+# Load CSS Styling
 def local_css(file_name):
     with open(file_name) as f:
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
 local_css("style.css")
 
-# TMDB API Endpoints
-tmdb_base_url = "https://api.themoviedb.org/3"
-search_url = f"{tmdb_base_url}/search/movie"
-details_url = f"{tmdb_base_url}/movie"
+# User Interface
+st.header("AI-Powered Movie Recommendation Engine", divider="gray")
+st.subheader("Personalize Your Movie Recommendations")
 
-# Fetch movie details from TMDB
-def fetch_movie_details(movie_name):
-    response = requests.get(search_url, params={"api_key": tmdb_api_key, "query": movie_name})
-    response.raise_for_status()
-    return response.json().get('results', [])
+# User inputs for movie preferences
+genre = st.selectbox(
+    "What genre of movies do you prefer?",
+    ("Action", "Comedy", "Drama", "Horror", "Romantic", "Sci-Fi", "Thriller"),
+    index=None,
+    placeholder="Select your preferred genre."
+)
 
-# Use Google Generative AI to enhance recommendations
-def generate_recommendations(movie_title):
-    try:
-        prompt = f"Recommend me movies similar to {movie_title} with augmented details from TMDB and IMDB."
-        response = genai.generate_text(prompt=prompt)
-        return response['text'] if 'text' in response else "No recommendations found."
-    except Exception as e:
-        st.error("Failed to generate AI recommendations.")
-        st.write(str(e))
-        return "No recommendations found."
+actor = st.text_input(
+    "Favorite actor/actress:",
+    value="Leonardo DiCaprio"
+)
 
-# Function to display AI recommendations
-def display_recommendations(recommendations):
-    st.write("### AI-Enhanced Recommendations")
-    st.write(recommendations)
+director = st.text_input(
+    "Favorite director:",
+    value="Christopher Nolan"
+)
 
-# Streamlit App Layout
-st.sidebar.title("Movie Recommendation Engine")
+movie = st.text_input(
+    "Enter a movie you like:",
+    value="Inception"
+)
 
-# User input for movie they like
-user_movie = st.sidebar.text_input("Enter a movie you like")
+# Custom prompt for movie recommendations
+prompt = f"""
+I am a movie recommendation engine. Based on the following preferences, 
+recommend some movies that the user might enjoy.
+- Preferred genre: {genre}
+- Favorite actor/actress: {actor}
+- Favorite director: {director}
+- A movie they liked: {movie}
 
-if st.sidebar.button("Get Recommendations"):
-    if user_movie:
-        # Fetch movie details
-        movies = fetch_movie_details(user_movie)
+Please include the movie title, a brief description, 
+and why it matches the user's preferences.
+"""
 
-        if movies:
-            # Get the first matching movie (you can enhance this to let users select from multiple)
-            movie_title = movies[0]['title']
+max_output_tokens = 2048
 
-            st.write(f"### You selected: {movie_title}")
+config = {
+    "temperature": 0.7,
+    "max_output_tokens": max_output_tokens,
+}
 
-            # Generate AI-enhanced recommendations
-            recommendations = generate_recommendations(movie_title)
-
-            # Display recommendations
-            display_recommendations(recommendations)
-        else:
-            st.warning("No movies found with the selected name.")
-    else:
-        st.warning("Please enter a movie name.")
+generate_recommendations = st.button("Generate my movie recommendations", key="generate_recommendations")
+if generate_recommendations and prompt:
+    with st.spinner("Generating your movie recommendations using Gemini..."):
+        recommendations_tab, prompt_tab = st.tabs(["Recommendations", "Prompt"])
+        with recommendations_tab:
+            try:
+                # Using genai to generate recommendations
+                response = genai.generate_text(prompt=prompt, temperature=config["temperature"], max_output_tokens=config["max_output_tokens"])
+                recommendations = response["text"] if "text" in response else "No recommendations found."
+                
+                # Display recommendations with CSS styling
+                st.write("Your movie recommendations:")
+                recommendations_list = recommendations.split('\n')  # Assuming each recommendation is separated by a new line
+                
+                # Create the container div for the movies
+                st.markdown('<div class="movies-container">', unsafe_allow_html=True)
+                
+                cols = st.columns(4)  # Create 4 columns for displaying recommendations in rows
+                for i, recommendation in enumerate(recommendations_list):
+                    with cols[i % 4]:  # Distribute recommendations across 4 columns
+                        st.markdown(f"""
+                        <div class="movie-card">
+                            <div class="movie-info">
+                                <h4>{recommendation}</h4>
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                
+                st.markdown('</div>', unsafe_allow_html=True)  # Close the container div
+                
+                logging.info(recommendations)
+            except Exception as e:
+                st.error("Failed to generate AI recommendations.")
+                st.write(str(e))
+        with prompt_tab:
+            st.text(prompt)
 
