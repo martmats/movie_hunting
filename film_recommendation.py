@@ -2,6 +2,7 @@ import os
 import streamlit as st
 import logging
 import google.generativeai as genai
+import requests 
 
 # Configure logging (local logging)
 logging.basicConfig(level=logging.INFO)
