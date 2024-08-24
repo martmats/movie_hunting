@@ -9,3 +9,4 @@ plotly
 datetime
 Pillow
 google.generativeai
+google-cloud-logging
