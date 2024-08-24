@@ -1,16 +1,13 @@
 import os
 import streamlit as st
 import logging
-from google.cloud import logging as cloud_logging
 import google.generativeai as genai
 
-# Configure logging
+# Configure logging (local logging)
 logging.basicConfig(level=logging.INFO)
-log_client = cloud_logging.Client()
-log_client.setup_logging()
 
 # Load API keys from secrets
-google_api_key = "AIzaSyBVkD-QgIk41F8g4Ro3l_6DwWgyXSqu4YY"
+google_api_key = st.secrets["GOOGLE_API_KEY"]
 
 # Configure Google Generative AI
 try:
