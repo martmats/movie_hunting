@@ -84,9 +84,9 @@ if google_api_key:
                 if response and response.result:  # Ensure the response is valid
                     recommendations = response.result
                     
-                    # Regex pattern to capture multiple movies correctly
+                    # Simple pattern to match movies
                     pattern = re.compile(
-                        r'\#\#\s*(.*?)\s*\((\d{4})\)\s*\*\s*A brief description of the plot:\s*(.*?)\s*\*\s*The main cast:\s*(.*?)\s*\*\s*An image URL of the movie poster:\s*(.*?)\s*\*\s*The platforms where the movie can be watched:\s*(.*?)\n'
+                        r'\#\#\s*(.*?)\s*\((\d{4})\)\s*\*\s*A brief description of the plot:\s*(.*?)\n\*\s*The main cast:\s*(.*?)\n\*\s*An image URL of the movie poster:\s*(.*?)\n\*\s*The platforms where the movie can be watched:\s*(.*?)\n'
                     )
                     movies = pattern.findall(recommendations)
 
@@ -118,9 +118,9 @@ if google_api_key:
                     else:
                         st.warning("No movie recommendations were generated.")
                     
-                    logging.info(recommendations)
                 else:
                     st.warning("No recommendations were generated. Please try again.")
             except Exception as e:
                 st.error("Failed to generate AI recommendations.")
                 st.write(str(e))
+
