@@ -90,8 +90,10 @@ if google_api_key:
                         # Debugging: Print the AI response to see the structure
                         st.write("Debug - Raw AI Response:", recommendations)
 
-                        # Attempt to parse the movies using a regex pattern
-                        pattern = re.compile(r'\*\*(.*?)\*\*.*?\((.*?)\)\n\* (.*?)\n\* \[Image\]\((.*?)\)\n\* \[Available on (.*?)\]')
+                        # Adjusted regex pattern to capture the AI's output structure
+                        pattern = re.compile(
+                            r'\*\*(.*?)\*\* \((\d{4})\)\n\* (.*?)\n\* \[Image\]\((.*?)\)\n\* \[Available on (.*?)\]'
+                        )
                         movies = pattern.findall(recommendations)
 
                         if movies:
