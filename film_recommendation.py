@@ -92,7 +92,7 @@ if google_api_key:
 
                         # Adjusted regex pattern to capture the AI's output structure
                         pattern = re.compile(
-                            r'\*\*(.*?)\*\* \((\d{4})\)\n\* (.*?)\n\* \[Image\]\((.*?)\)\n\* \[Available on (.*?)\]'
+                            r'\#\# (.*?)\s+\((\d{4})\)\n\* A brief description of the plot:\n(.*?)\n\* An image URL of the movie poster:\n(.*?)\n\* The platforms where the movie can be watched:(.*?)\n'
                         )
                         movies = pattern.findall(recommendations)
 
@@ -103,16 +103,17 @@ if google_api_key:
                             
                             cols = st.columns(2)  # Create 2 columns for displaying recommendations in rows
                             for i, movie in enumerate(movies):
-                                title, year, plot, image_url, platform = movie
+                                title, year, plot, image_url, platform_raw = movie
+                                platform = ', '.join([p.strip() for p in platform_raw.split('*') if p.strip()])
 
                                 with cols[i % 2]:  # Distribute recommendations across columns
                                     st.markdown(f"""
                                     <div class="movie-card">
-                                        <img src="{image_url}" alt="{title} ({year})" style="width:100%; height:auto; border-radius:10px;">
+                                        <img src="{image_url.strip()}" alt="{title} ({year})" style="width:100%; height:auto; border-radius:10px;">
                                         <div class="movie-info">
                                             <h4>{title} ({year})</h4>
                                             <p><strong>Platform:</strong> {platform}</p>
-                                            <p>{plot}</p>
+                                            <p>{plot.strip()}</p>
                                         </div>
                                     </div>
                                     """, unsafe_allow_html=True)
