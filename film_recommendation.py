@@ -8,6 +8,7 @@ logging.basicConfig(level=logging.INFO)
 
 # Load API keys from secrets
 google_api_key = "AIzaSyBVkD-QgIk41F8g4Ro3l_6DwWgyXSqu4YY"
+tmdb_api_key = st.secrets["tmdb_api_key"]
 
 # Configure Google Generative AI
 try:
@@ -23,6 +24,20 @@ def local_css(file_name):
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
 local_css("style.css")
+
+# Function to get TMDB poster image URL
+def get_movie_poster(movie_title):
+    search_url = f"https://api.themoviedb.org/3/search/movie"
+    params = {
+        "api_key": tmdb_api_key,
+        "query": movie_title
+    }
+    response = requests.get(search_url, params=params)
+    if response.status_code == 200:
+        results = response.json().get('results', [])
+        if results:
+            return f"https://image.tmdb.org/t/p/w500{results[0]['poster_path']}"
+    return "https://via.placeholder.com/220x330?text=No+Image"  # Placeholder if no image found
 
 # User Interface
 st.header("AI-Powered Movie Recommendation Engine", divider="gray")
@@ -85,13 +100,9 @@ if generate_recommendations and prompt:
                 
                 if response and response.result:  # Ensure the response is valid
                     recommendations = response.result
-                    st.write("Raw AI Response:", recommendations)  # For debugging
-
-                    # Splitting the response into separate movie recommendations
                     movies = recommendations.split("\n\n")  # Assuming each movie block is separated by double new lines
 
                     if movies:
-                        # Display recommendations with CSS styling
                         st.write("Your movie recommendations:")
                         
                         st.markdown('<div class="movies-container">', unsafe_allow_html=True)
@@ -102,13 +113,13 @@ if generate_recommendations and prompt:
                             if len(lines) >= 4:
                                 title = lines[0].strip("1. ").strip()
                                 plot = lines[2].replace("A brief description of the plot:", "").strip()
-                                image_url = lines[4].replace("An image URL of the movie poster:", "").strip()
+                                poster_url = get_movie_poster(title)  # Get TMDB poster URL
                                 platform = lines[6].replace("The platforms where the movie can be watched:", "").strip()
 
                                 with cols[i % 2]:  # Distribute recommendations across columns
                                     st.markdown(f"""
                                     <div class="movie-card">
-                                        <img src="{image_url}" alt="{title}" style="width:100%; height:auto; border-radius:10px;">
+                                        <img src="{poster_url}" alt="{title}" style="width:100%; height:auto; border-radius:10px;">
                                         <div class="movie-info">
                                             <h4>{title}</h4>
                                             <p><strong>Platform:</strong> {platform}</p>
@@ -130,4 +141,3 @@ if generate_recommendations and prompt:
                 st.write(str(e))
         with prompt_tab:
             st.text(prompt)
-
