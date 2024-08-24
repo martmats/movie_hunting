@@ -132,7 +132,6 @@ if google_api_key:
 
                             st.markdown(f"""
                             <div class="movie-card">
-                                <img src="{image_url.strip()}" alt="{title}" style="border-radius:10px;">
                                 <h4>{title}</h4>
                                 <p><strong>Genre:</strong> {genre.strip()}</p>
                                 <p><strong>Actors:</strong> {actor.strip()}</p>
@@ -141,6 +140,9 @@ if google_api_key:
                                 <p class="platforms"><strong>Available Platforms:</strong> {platforms.strip()}</p>
                             </div>
                             """, unsafe_allow_html=True)
+                            
+                            # Show the image directly instead of a URL
+                            st.image(image_url.strip(), use_column_width=True)
 
                         st.markdown('</div>', unsafe_allow_html=True)
 
