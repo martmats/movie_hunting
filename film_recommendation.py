@@ -72,7 +72,7 @@ if google_api_key:
                     recommendations = response.result
 
                     # Print the raw AI response to debug the format
-                    st.write("Debug - Raw AI Response:", recommendations)
+                    st.write("Here are the raw details received from the AI:", recommendations)
 
                     # Adjusted regex pattern to capture movie recommendations
                     pattern = re.compile(
@@ -83,20 +83,61 @@ if google_api_key:
                     if movies:
                         st.write("Your movie recommendations:")
 
-                        cols = st.columns(2)  # Create 2 columns for displaying recommendations in rows
-                        for i, movie in enumerate(movies):
+                        st.markdown(
+                            """
+                            <style>
+                            .movies-container {
+                                display: flex;
+                                flex-wrap: wrap;
+                                gap: 20px;
+                            }
+                            .movie-card {
+                                background-color: #f9f9f9;
+                                border: 1px solid #ddd;
+                                border-radius: 10px;
+                                width: 48%;
+                                padding: 15px;
+                                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                                transition: transform 0.3s ease;
+                            }
+                            .movie-card:hover {
+                                transform: translateY(-5px);
+                            }
+                            .movie-card img {
+                                width: 100%;
+                                height: auto;
+                                border-radius: 10px;
+                            }
+                            .movie-card h4 {
+                                margin-top: 10px;
+                                font-size: 1.25rem;
+                                color: #333;
+                            }
+                            .movie-card p {
+                                font-size: 0.9rem;
+                                color: #555;
+                            }
+                            </style>
+                            """,
+                            unsafe_allow_html=True
+                        )
+
+                        st.markdown('<div class="movies-container">', unsafe_allow_html=True)
+
+                        for movie in movies:
                             title, plot, cast, image_url, platforms = movie
 
-                            with cols[i % 2]:  # Distribute recommendations across columns
-                                st.markdown(f"""
-                                <div style="padding: 10px; border: 1px solid #ddd; border-radius: 10px; margin-bottom: 10px;">
-                                    <img src="{image_url.strip()}" alt="{title}" style="width:100%; height:auto; border-radius:10px;">
-                                    <h4>{title}</h4>
-                                    <p><strong>Plot:</strong> {plot.strip()}</p>
-                                    <p><strong>Cast:</strong> {cast.strip()}</p>
-                                    <p><strong>Platforms:</strong> {platforms.strip()}</p>
-                                </div>
-                                """, unsafe_allow_html=True)
+                            st.markdown(f"""
+                            <div class="movie-card">
+                                <img src="{image_url.strip()}" alt="{title}" style="border-radius:10px;">
+                                <h4>{title}</h4>
+                                <p><strong>Plot:</strong> {plot.strip()}</p>
+                                <p><strong>Cast:</strong> {cast.strip()}</p>
+                                <p><strong>Platforms:</strong> {platforms.strip()}</p>
+                            </div>
+                            """, unsafe_allow_html=True)
+
+                        st.markdown('</div>', unsafe_allow_html=True)
 
                     else:
                         st.warning("No movie recommendations were generated.")
