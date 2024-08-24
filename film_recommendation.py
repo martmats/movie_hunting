@@ -73,8 +73,8 @@ else:
                 # Create the container div for the movies
                 st.markdown('<div class="movies-container">', unsafe_allow_html=True)
 
-                for movie in movies:
-                    # For each movie, create a movie-card div
+                # Iterate through movies and render them in the grid
+                for index, movie in enumerate(movies):
                     movie_card = f"""
                     <div class="movie-card">
                         <img src="https://image.tmdb.org/t/p/w500{movie['poster_path']}" alt="{movie['title']} poster">
@@ -84,8 +84,12 @@ else:
                         </div>
                     </div>
                     """
+                    # Insert a new row after every 4 movies
+                    if index % 4 == 0 and index != 0:
+                        st.markdown('</div><div class="movies-container">', unsafe_allow_html=True)
+                    
                     st.markdown(movie_card, unsafe_allow_html=True)
-                
+
                 # Close the container div
                 st.markdown('</div>', unsafe_allow_html=True)
 
