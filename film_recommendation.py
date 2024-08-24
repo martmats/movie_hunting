@@ -35,7 +35,7 @@ def get_movie_poster(movie_title):
     response = requests.get(search_url, params=params)
     if response.status_code == 200:
         results = response.json().get('results', [])
-        if results:
+        if results and results[0].get('poster_path'):
             return f"https://image.tmdb.org/t/p/w500{results[0]['poster_path']}"
     return "https://via.placeholder.com/220x330?text=No+Image"  # Placeholder if no image found
 
@@ -92,52 +92,46 @@ config = {
 generate_recommendations = st.button("Generate my movie recommendations", key="generate_recommendations")
 if generate_recommendations and prompt:
     with st.spinner("Generating your movie recommendations using Gemini..."):
-        recommendations_tab, prompt_tab = st.tabs(["Recommendations", "Prompt"])
-        with recommendations_tab:
-            try:
-                # Using genai to generate recommendations
-                response = genai.generate_text(prompt=prompt, temperature=config["temperature"], max_output_tokens=config["max_output_tokens"])
+        try:
+            response = genai.generate_text(prompt=prompt, temperature=config["temperature"], max_output_tokens=config["max_output_tokens"])
+            
+            if response and response.result:
+                recommendations = response.result
+                movies = recommendations.split("\n\n")  # Assuming each movie block is separated by double new lines
                 
-                if response and response.result:  # Ensure the response is valid
-                    recommendations = response.result
-                    movies = recommendations.split("\n\n")  # Assuming each movie block is separated by double new lines
-
-                    if movies:
-                        st.write("Your movie recommendations:")
-                        
-                        st.markdown('<div class="movies-container">', unsafe_allow_html=True)
-                        
-                        cols = st.columns(2)  # Create 2 columns for displaying recommendations in rows
-                        for i, movie in enumerate(movies):
-                            lines = movie.split("\n")
-                            if len(lines) >= 4:
-                                title = lines[0].strip("1. ").strip()
-                                plot = lines[2].replace("A brief description of the plot:", "").strip()
-                                poster_url = get_movie_poster(title)  # Get TMDB poster URL
-                                platform = lines[6].replace("The platforms where the movie can be watched:", "").strip()
-
-                                with cols[i % 2]:  # Distribute recommendations across columns
-                                    st.markdown(f"""
-                                    <div class="movie-card">
-                                        <img src="{poster_url}" alt="{title}" style="width:100%; height:auto; border-radius:10px;">
-                                        <div class="movie-info">
-                                            <h4>{title}</h4>
-                                            <p><strong>Platform:</strong> {platform}</p>
-                                            <p>{plot}</p>
-                                        </div>
-                                    </div>
-                                    """, unsafe_allow_html=True)
-                        
-                        st.markdown('</div>', unsafe_allow_html=True)  # Close the container div
-                        
-                    else:
-                        st.warning("No movie recommendations were generated.")
+                if movies:
+                    st.write("Your movie recommendations:")
                     
-                    logging.info(recommendations)
+                    st.markdown('<div class="movies-container">', unsafe_allow_html=True)
+                    
+                    cols = st.columns(2)  # Create 2 columns for displaying recommendations in rows
+                    for i, movie in enumerate(movies):
+                        lines = movie.split("\n")
+                        if len(lines) >= 4:
+                            title = lines[0].split(".")[1].strip()
+                            plot = lines[2].replace("A brief description of the plot:", "").strip()
+                            poster_url = get_movie_poster(title)  # Get TMDB poster URL
+                            platform = lines[3].replace("Platforms:", "").strip()
+
+                            with cols[i % 2]:  # Distribute recommendations across columns
+                                st.markdown(f"""
+                                <div class="movie-card">
+                                    <img src="{poster_url}" alt="{title}" style="width:100%; height:auto; border-radius:10px;">
+                                    <div class="movie-info">
+                                        <h4>{title}</h4>
+                                        <p><strong>Platform:</strong> {platform}</p>
+                                        <p>{plot}</p>
+                                    </div>
+                                </div>
+                                """, unsafe_allow_html=True)
+                    
+                    st.markdown('</div>', unsafe_allow_html=True)  # Close the container div
+                    
                 else:
-                    st.warning("No recommendations were generated. Please try again.")
-            except Exception as e:
-                st.error("Failed to generate AI recommendations.")
-                st.write(str(e))
-        with prompt_tab:
-            st.text(prompt)
+                    st.warning("No movie recommendations were generated.")
+            
+            else:
+                st.warning("No recommendations were generated. Please try again.")
+        except Exception as e:
+            st.error("Failed to generate AI recommendations.")
+            st.write(str(e))
