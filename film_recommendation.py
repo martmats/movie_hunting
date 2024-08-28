@@ -10,7 +10,7 @@ import google.generativeai as genai
 logging.basicConfig(level=logging.INFO)
 
 # My API Key
-api_key = "3eecb43c7f0849d4f8f90cfdd1d045ff"
+api_key = os.getenv('tmdb_api_key')
 
 # Base URL
 base_url = 'https://api.themoviedb.org/3'
